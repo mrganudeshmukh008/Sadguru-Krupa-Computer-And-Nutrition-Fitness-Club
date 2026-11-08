@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="50%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#grad)" />
+  <circle cx="50" cy="50" r="34" fill="#ffffff" fill-opacity="0.15" />
+  <!-- Computer monitor & heart pulse iconography -->
+  <path d="M26 30 C26 27.8 27.8 26 30 26 L70 26 C72.2 26 74 27.8 74 30 L74 54 C74 56.2 72.2 58 70 58 L30 58 C27.8 58 26 56.2 26 54 Z" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="42" y1="67" x2="58" y2="67" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="50" y1="58" x2="50" y2="67" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Pulse line inside screen -->
+  <path d="M33 42 L42 42 L46 34 L54 50 L58 42 L67 42" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

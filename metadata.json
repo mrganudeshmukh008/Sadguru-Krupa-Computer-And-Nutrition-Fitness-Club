@@ -1,0 +1,6 @@
+{
+  "name": "सद्गुरू कृपा कॉम्प्युटर & Wellness Club",
+  "description": "सद्गुरू कृपा कॉम्प्युटर — CSC, आधार कार्ड, पॅन कार्ड, झेरॉक्स व लॅमिनेशन ऑनलाइन सेवा | Nutrition Fitness Club — वेलनेस कोच भागवतराव ह. देशमुख",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
