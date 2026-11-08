@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "सदगुरू कृपा कॉम्प्युटर & Wellness Club",
+  "short_name": "सदगुरू कृपा",
+  "description": "सदगुरू कृपा कॉम्प्युटर — CSC, आधार कार्ड, पॅन कार्ड, झेरॉक्स व लॅमिनेशन ऑनलाइन सेवा | Nutrition Fitness Club — वेलनेस कोच भागवतराव ह. देशमुख",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1d4ed8",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

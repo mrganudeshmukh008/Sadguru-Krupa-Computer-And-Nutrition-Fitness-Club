@@ -26,6 +26,8 @@ import {
   ChevronRight,
   Info,
   Calendar,
+  Pin,
+  X,
 } from 'lucide-react';
 
 import { TabId, ServiceDetail, HealthBenefit, Testimonial, EnquiryOption } from './types';
@@ -40,6 +42,7 @@ import {
   SHOP_CALL_RAW,
   WHATSAPP_NUMBER,
   getStoredTestimonials,
+  fetchOnlineTestimonials,
 } from './lib/storage';
 
 const TABS: { id: TabId; label: string; sub: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -219,7 +222,7 @@ const HEALTH_BENEFITS: HealthBenefit[] = [
 ];
 
 const computerMessage = (name: string, mobile: string, topic: string) =>
-  `नमस्कार सद्गुरू कृपा कॉम्प्युटर, माझे नाव ${name} आहे (${mobile}). मला "${topic}" बाबत काम व माहिती हवी आहे.`;
+  `नमस्कार सदगुरू कृपा कॉम्प्युटर, माझे नाव ${name} आहे (${mobile}). मला "${topic}" बाबत काम व माहिती हवी आहे.`;
 
 const healthMessage = (name: string, mobile: string, topic: string) =>
   `नमस्कार भागवतरावजी (वेलनेस कोच), माझे नाव ${name} आहे (${mobile}). मला "${topic}" बाबत मार्गदर्शन हवे आहे.`;
@@ -231,10 +234,23 @@ export default function App() {
   const [isBmiOpen, setIsBmiOpen] = useState(false);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [previewStory, setPreviewStory] = useState<Testimonial | null>(null);
 
-  // Load testimonials
+  // Load testimonials from server & auto-sync
   useEffect(() => {
     setTestimonials(getStoredTestimonials());
+
+    fetchOnlineTestimonials().then((data) => {
+      setTestimonials(data);
+    });
+
+    const interval = setInterval(() => {
+      fetchOnlineTestimonials().then((data) => {
+        setTestimonials(data);
+      });
+    }, 12000);
+
+    return () => clearInterval(interval);
   }, [view]);
 
   const showToast = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -388,7 +404,7 @@ export default function App() {
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <div>
                     <h1 className="text-2xl sm:text-[26px] font-black leading-tight">
-                      सद्गुरू कृपा कॉम्प्युटर
+                      सदगुरू कृपा कॉम्प्युटर
                     </h1>
                     <p className="mt-1 text-xs sm:text-sm text-blue-100 font-medium">
                       Online Work • CSC • Digital Seva Kendra
@@ -476,24 +492,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Enquiry Box */}
-              <div>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-                  चौकशी करा / Enquire Now
-                </h2>
-                <EnquiryBox
-                  variant="computer"
-                  title="ऑनलाइन काम चौकशी / Quick Enquiry"
-                  subtitle="कोणत्या सेवेबद्दल विचारायचे आहे? माहिती भरा आणि थेट व्हॉट्सॲपवर चॅट करा."
-                  selectorLabel="सेवा निवडा (Select Service)"
-                  options={COMPUTER_TOPICS}
-                  buttonText="व्हॉट्सॲपवर पाठवा (Chat on WhatsApp)"
-                  whatsappNumber={WHATSAPP_NUMBER}
-                  buildMessage={computerMessage}
-                  onShowToast={showToast}
-                />
-              </div>
-
               {/* Shop Timings & Location */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 text-xs space-y-2.5 shadow-xs">
                 <div className="flex items-center gap-2 font-bold text-slate-800">
@@ -510,6 +508,24 @@ export default function App() {
                     <span>सकाळी १०:०० ते दुपारी २:००</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Enquiry Box (Moved to last on page) */}
+              <div>
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                  चौकशी करा / Enquire Now
+                </h2>
+                <EnquiryBox
+                  variant="computer"
+                  title="ऑनलाइन काम चौकशी / Quick Enquiry"
+                  subtitle="कोणत्या सेवेबद्दल विचारायचे आहे? माहिती भरा आणि थेट व्हॉट्सॲपवर चॅट करा."
+                  selectorLabel="सेवा निवडा (Select Service)"
+                  options={COMPUTER_TOPICS}
+                  buttonText="व्हॉट्सॲपवर पाठवा (Chat on WhatsApp)"
+                  whatsappNumber={WHATSAPP_NUMBER}
+                  buildMessage={computerMessage}
+                  onShowToast={showToast}
+                />
               </div>
             </motion.div>
           ) : (
@@ -660,24 +676,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Free Wellness Consultation Box */}
-              <div>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
-                  सल्ला घ्या / Free Consultation
-                </h2>
-                <EnquiryBox
-                  variant="health"
-                  title="मोफत वेलनेस कन्सल्टेशन (Free Consultation)"
-                  subtitle="वजन वाढवणे किंवा कमी करणे यासाठी थेट कोचशी व्हॉट्सॲपवर संपर्क साधा."
-                  selectorLabel="तुमचे उद्दिष्ट (Your Goal)"
-                  options={HEALTH_TOPICS}
-                  buttonText="कोचशी व्हॉट्सॲपवर बोला (Chat with Coach)"
-                  whatsappNumber={WHATSAPP_NUMBER}
-                  buildMessage={healthMessage}
-                  onShowToast={showToast}
-                />
-              </div>
-
               {/* Success Stories (यशोगाथा) */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
@@ -696,27 +694,60 @@ export default function App() {
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       data-testid={`testimonial-card-${t.id}`}
-                      className="overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-xs"
+                      className={`overflow-hidden rounded-2xl bg-white transition-all ${
+                        t.pinned
+                          ? "border-2 border-emerald-500 shadow-md ring-2 ring-emerald-500/25"
+                          : "border border-emerald-200/80 shadow-xs"
+                      }`}
                     >
-                      <img
-                        src={t.image_url}
-                        alt={`${t.name} — before & after`}
-                        className="w-full max-h-72 object-cover object-top"
-                        loading="lazy"
-                        onError={(e) => {
-                          // Fallback to placeholder if needed
-                          (e.target as HTMLElement).style.display = 'none';
-                        }}
-                      />
+                      {t.pinned && (
+                        <div className="flex items-center justify-between px-3.5 py-1.5 bg-gradient-to-r from-emerald-800 via-emerald-700 to-lime-600 text-white text-[11px] font-bold shadow-xs">
+                          <span className="flex items-center gap-1.5">
+                            <Pin className="w-3.5 h-3.5 fill-current rotate-45 text-lime-200" />
+                            <span>पिन केलेला निकाल — वेलनेस कोच स्वतःचा रिझल्ट</span>
+                          </span>
+                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider backdrop-blur">
+                            Pinned
+                          </span>
+                        </div>
+                      )}
+                      <div
+                        className="relative group cursor-pointer overflow-hidden"
+                        onClick={() => setPreviewStory(t)}
+                      >
+                        <img
+                          src={t.image_url}
+                          alt={`${t.name} — before & after`}
+                          className="w-full max-h-80 object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-medium backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity">
+                          मोठा फोटो पहा
+                        </span>
+                      </div>
                       <div className="flex items-center gap-2.5 px-4 py-3 bg-white">
                         <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                            t.pinned
+                              ? "bg-emerald-100 text-emerald-700 font-black"
+                              : "bg-emerald-50 text-emerald-600"
+                          }`}
                           aria-hidden
                         >
                           <BadgeCheck className="h-4 w-4" />
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-emerald-950">{t.name}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-sm font-bold text-emerald-950">{t.name}</p>
+                            {t.pinned && (
+                              <span className="shrink-0 px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                कोच
+                              </span>
+                            )}
+                          </div>
                           {t.weight_note && (
                             <p className="truncate text-xs font-semibold text-emerald-700">
                               {t.weight_note}
@@ -744,6 +775,24 @@ export default function App() {
                   </button>
                 </div>
               </div>
+
+              {/* Free Wellness Consultation Box (Moved to last on page) */}
+              <div className="pt-2">
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
+                  सल्ला घ्या / Free Consultation
+                </h2>
+                <EnquiryBox
+                  variant="health"
+                  title="मोफत वेलनेस कन्सल्टेशन (Free Consultation)"
+                  subtitle="वजन वाढवणे किंवा कमी करणे यासाठी थेट कोचशी व्हॉट्सॲपवर संपर्क साधा."
+                  selectorLabel="तुमचे उद्दिष्ट (Your Goal)"
+                  options={HEALTH_TOPICS}
+                  buttonText="कोचशी व्हॉट्सॲपवर बोला (Chat with Coach)"
+                  whatsappNumber={WHATSAPP_NUMBER}
+                  buildMessage={healthMessage}
+                  onShowToast={showToast}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -751,7 +800,7 @@ export default function App() {
         {/* Footer Info */}
         <footer className="pt-4 text-center space-y-1">
           <p className="text-[11px] font-medium leading-relaxed text-slate-400">
-            सद्गुरू कृपा कॉम्प्युटर &amp; Nutrition Fitness Club
+            सदगुरू कृपा कॉम्प्युटर &amp; Nutrition Fitness Club
           </p>
           <p className="text-[11px] font-bold text-slate-500">
             संपर्क / WhatsApp: {SHOP_PHONE}
@@ -773,7 +822,7 @@ export default function App() {
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
               tab === "computer"
-                ? "नमस्कार सद्गुरू कृपा कॉम्प्युटर, मला ऑनलाइन कामाबाबत माहिती हवी आहे."
+                ? "नमस्कार सदगुरू कृपा कॉम्प्युटर, मला ऑनलाइन कामाबाबत माहिती हवी आहे."
                 : "नमस्कार भागवतरावजी (वेलनेस कोच), मला आरोग्याबाबत माहिती हवी आहे.",
             )}`}
             target="_blank"
@@ -802,6 +851,40 @@ export default function App() {
         onClose={() => setIsBmiOpen(false)}
         onShowToast={showToast}
       />
+
+      {/* Full Photo Preview Modal */}
+      {previewStory && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewStory(null)}
+        >
+          <div
+            className="relative max-w-md w-full bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3.5 bg-slate-950 text-white border-b border-slate-800">
+              <div className="min-w-0 pr-2">
+                <p className="text-sm font-bold truncate">{previewStory.name}</p>
+                {previewStory.weight_note && (
+                  <p className="text-xs text-emerald-400 truncate">{previewStory.weight_note}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setPreviewStory(null)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                aria-label="Close photo"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <img
+              src={previewStory.image_url}
+              alt={previewStory.name}
+              className="w-full max-h-[75vh] object-contain bg-slate-950"
+            />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

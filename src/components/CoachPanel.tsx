@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { ArrowLeft, LockKeyhole, ImagePlus, Trash2, RotateCcw, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, LockKeyhole, ImagePlus, Trash2, RotateCcw, CheckCircle, Pin } from 'lucide-react';
 import { Testimonial } from '../types';
 import {
   verifyCoachPin,
   getStoredTestimonials,
-  saveNewTestimonial,
-  deleteStoredTestimonial,
-  resetDefaultTestimonials,
+  fetchOnlineTestimonials,
+  saveTestimonialOnline,
+  deleteTestimonialOnline,
+  togglePinOnline,
+  resetTestimonialsOnline,
 } from '../lib/storage';
 
 interface CoachPanelProps {
@@ -54,10 +56,16 @@ export const CoachPanel: React.FC<CoachPanelProps> = ({ onBack, onShowToast }) =
   const [stories, setStories] = useState<Testimonial[]>(() => getStoredTestimonials());
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync with online server
+  useEffect(() => {
+    fetchOnlineTestimonials().then(setStories);
+  }, []);
+
   const unlock = () => {
     if (verifyCoachPin(pin)) {
       sessionStorage.setItem("coachPin", pin);
       setUnlocked(true);
+      fetchOnlineTestimonials().then(setStories);
       onShowToast("कोच पॅनल अनलॉक झाले!", "success");
     } else {
       onShowToast("पिन चुकीचा आहे (Wrong PIN). टीप: 2906", "error");
@@ -76,39 +84,60 @@ export const CoachPanel: React.FC<CoachPanelProps> = ({ onBack, onShowToast }) =
 
     setIsSaving(true);
     try {
-      saveNewTestimonial({
+      await saveTestimonialOnline({
         name: name.trim(),
         weight_note: weightNote.trim(),
-        image_url: image,
+        image,
+        pin,
       });
-      setStories(getStoredTestimonials());
+      const updated = await fetchOnlineTestimonials();
+      setStories(updated);
       setName("");
       setWeightNote("");
       setImage(null);
-      onShowToast("यशोगाथा जोडली! (Story added)", "success");
-    } catch {
-      onShowToast("सेव्ह करताना त्रुटी आली", "error");
+      onShowToast("यशोगाथा सर्व्हरवर सेव्ह झाली! सर्वांना दिसेल.", "success");
+    } catch (err: any) {
+      onShowToast(err.message || "सेव्ह करताना त्रुटी आली", "error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirmId === id) {
-      deleteStoredTestimonial(id);
-      setStories(getStoredTestimonials());
-      setConfirmId(null);
-      onShowToast("यशोगाथा काढली (Story removed)", "success");
+      try {
+        await deleteTestimonialOnline(id, pin);
+        const updated = await fetchOnlineTestimonials();
+        setStories(updated);
+        setConfirmId(null);
+        onShowToast("यशोगाथा सर्व्हरवरून काढली (Story removed)", "success");
+      } catch (err: any) {
+        onShowToast(err.message || "काढता आले नाही", "error");
+      }
     } else {
       setConfirmId(id);
     }
   };
 
-  const handleResetDefaults = () => {
+  const handleTogglePin = async (id: string) => {
+    try {
+      const updated = await togglePinOnline(id, pin);
+      setStories(updated);
+      onShowToast("पिन स्टेटस अपडेट झाले!", "info");
+    } catch (err: any) {
+      onShowToast(err.message || "पिन अपडेट अयशस्वी", "error");
+    }
+  };
+
+  const handleResetDefaults = async () => {
     if (window.confirm("सर्व मूळ यशोगाथा पूर्ववत करायच्या का?")) {
-      const defs = resetDefaultTestimonials();
-      setStories(defs);
-      onShowToast("मूळ यशोगाथा पूर्ववत केल्या!", "info");
+      try {
+        const defs = await resetTestimonialsOnline(pin);
+        setStories(defs);
+        onShowToast("मूळ यशोगाथा पूर्ववत केल्या!", "info");
+      } catch (err: any) {
+        onShowToast(err.message || "रीसेट अयशस्वी", "error");
+      }
     }
   };
 
@@ -303,18 +332,33 @@ export const CoachPanel: React.FC<CoachPanelProps> = ({ onBack, onShowToast }) =
                         </p>
                       )}
                     </div>
-                    <button
-                      data-testid={`btn-testimonial-delete-${t.id}`}
-                      onClick={() => handleDelete(t.id)}
-                      className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                        confirmId === t.id
-                          ? "bg-rose-600 text-white hover:bg-rose-700 animate-pulse"
-                          : "border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-                      }`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                      <span>{confirmId === t.id ? "खात्री?" : "काढा"}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePin(t.id)}
+                        className={`h-9 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          t.pinned
+                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                            : "border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                        }`}
+                        title={t.pinned ? "पिन काढायचे आहे?" : "वर पिन करा"}
+                      >
+                        <Pin className={`h-3.5 w-3.5 ${t.pinned ? "fill-emerald-700" : ""}`} />
+                        <span>{t.pinned ? "पिन" : ""}</span>
+                      </button>
+                      <button
+                        data-testid={`btn-testimonial-delete-${t.id}`}
+                        onClick={() => handleDelete(t.id)}
+                        className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          confirmId === t.id
+                            ? "bg-rose-600 text-white hover:bg-rose-700 animate-pulse"
+                            : "border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50"
+                        }`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        <span>{confirmId === t.id ? "खात्री?" : "काढा"}</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

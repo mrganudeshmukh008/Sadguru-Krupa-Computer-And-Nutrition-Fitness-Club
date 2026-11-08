@@ -32,4 +32,5 @@ export interface Testimonial {
   weight_note?: string;
   image_url: string;
   created_at?: string;
+  pinned?: boolean;
 }

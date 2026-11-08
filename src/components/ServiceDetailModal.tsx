@@ -19,7 +19,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   if (!service) return null;
 
   const handleWhatsApp = () => {
-    const text = `नमस्कार सद्गुरू कृपा कॉम्प्युटर, मला "${service.titleMr} (${service.titleEn})" सेवेबाबत माहिती व काम करायचे आहे.`;
+    const text = `नमस्कार सदगुरू कृपा कॉम्प्युटर, मला "${service.titleMr} (${service.titleEn})" सेवेबाबत माहिती व काम करायचे आहे.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
